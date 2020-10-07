@@ -6,7 +6,7 @@ from sqlalchemy import *
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-from CONSTANTS import *
+from ExtraData.CONSTANTS import *
 
 # INSTALL pymysql AT FIRST
 # sqlalchemy有pymysql依赖

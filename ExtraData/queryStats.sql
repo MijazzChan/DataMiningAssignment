@@ -87,29 +87,25 @@ ORDER BY 预计剩余天数 ASC
 LIMIT 100;
 
 # 按城市统计销售量的
-SELECT t_customer.customer_city         AS '客户城市',
-	     sum( t_sale.sale_product_count ) AS '销售产品数量'
-FROM
-	t_sale,
-	t_product,
-	t_customer
-WHERE
-	  t_sale.sale_product_id = t_product.product_id
-AND t_sale.sale_customer_id = t_customer.customer_id
+SELECT t_customer.customer_city       AS '客户城市',
+       sum(t_sale.sale_product_count) AS '销售产品数量'
+FROM t_sale,
+     t_product,
+     t_customer
+WHERE t_sale.sale_product_id = t_product.product_id
+  AND t_sale.sale_customer_id = t_customer.customer_id
 GROUP BY t_customer.customer_city
 ORDER BY 销售产品数量 DESC
 LIMIT 20;
 
 # 按城市统计销售金额的
-SELECT t_customer.customer_city         AS '客户城市',
-	     sum( t_sale.sale_product_count * t_product.product_price ) AS '销售金额'
-FROM
-	t_sale,
-	t_product,
-	t_customer
-WHERE
-	  t_sale.sale_product_id = t_product.product_id
-AND t_sale.sale_customer_id = t_customer.customer_id
+SELECT t_customer.customer_city                                 AS '客户城市',
+       sum(t_sale.sale_product_count * t_product.product_price) AS '销售金额'
+FROM t_sale,
+     t_product,
+     t_customer
+WHERE t_sale.sale_product_id = t_product.product_id
+  AND t_sale.sale_customer_id = t_customer.customer_id
 GROUP BY t_customer.customer_city
 ORDER BY 销售金额 DESC
 LIMIT 20;
@@ -117,7 +113,8 @@ LIMIT 20;
 # 按月份统计销售额
 SELECT MONTH(t_sale.sale_check_time)                            AS '月份',
        sum(t_sale.sale_product_count * t_product.product_price) AS '单月销售额'
-FROM t_sale, t_product
+FROM t_sale,
+     t_product
 WHERE t_sale.sale_product_id = t_product.product_id
 GROUP BY 月份
 ORDER BY 单月销售额
