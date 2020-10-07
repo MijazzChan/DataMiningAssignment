@@ -26,10 +26,10 @@ GROUP BY tOrder.orderID;
 
 
 # 输出销售额前十大客户的基本信息；
-SELECT tCustomer.customerID AS '顾客ID',
-       tCustomer.cCompanyName AS '顾客名',
+SELECT tCustomer.customerID                                         AS '顾客ID',
+       tCustomer.cCompanyName                                       AS '顾客名',
        cast(sum(tOrderDetail.productCount * tOrderDetail.productPrice
-               * (1 - tOrderDetail.productDiscount)) AS DECIMAL(14, 2) ) AS '总流水'
+           * (1 - tOrderDetail.productDiscount)) AS DECIMAL(14, 2)) AS '总流水'
 FROM tCustomer,
      tOrder,
      tOrderDetail
@@ -38,6 +38,7 @@ WHERE tCustomer.customerID = tOrder.customerID
 GROUP BY tCustomer.customerID
 ORDER BY 总流水 DESC
 LIMIT 10;
+
 
 # 输出平均订单单价最高（总额/订单数）客户的基本信息；
 SELECT tCustomer.customerID                                                                            AS '顾客ID',
