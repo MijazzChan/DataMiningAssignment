@@ -1,3 +1,5 @@
+> For better experience, visit [Assignment3-Redo on Gitee Pages](https://mijazzchan.gitee.io/dataminingassignment/Assignment3/DataMiningAssignment3-Redo.html)
+
 ```python
 # -*- coding: utf-8 -*-
 # @Author   : 陈浩骏, 2017326603075
@@ -9,20 +11,382 @@ from matplotlib import pyplot as plt
 import seaborn as sns
 import pylab as plot
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
-
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.svm import LinearSVC
+%matplotlib inline
+plt.rcParams['figure.dpi'] = 150
+plt.rcParams['savefig.dpi'] = 150
+sns.set(rc={"figure.dpi": 150, 'savefig.dpi': 150})
 from jupyterthemes import jtplot
 jtplot.style(theme='monokai', context='notebook', ticks=True, grid=False)
-from IPython.core.display import HTML
-HTML("""
-<style>
-.output_png {
-    display: table-cell;
-    text-align: center;
-    vertical-align: middle;
-}
-</style>
-""");
 ```
+
+首次数据是从`kaggle`上直接下载下来的.
+首次作业见[Assignment3 Page](https://mijazzchan.gitee.io/dataminingassignment/Assignment3/DataMiningAssignment3.html)
+
+因下列block所依赖数据为`kaggle`上的原始数据, 而实际课程上作业拿到的数据是经过特意修改后的, 含有重复列和特殊值的.
+
+故以下`block`专门对数据进行去重.
+
+
+```python
+corruptedData = pd.read_csv('./CorruptedTitanic/train.csv')
+corruptedData.describe()
+```
+
+
+
+
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>PassengerId</th>
+      <th>Survived</th>
+      <th>Pclass</th>
+      <th>Age</th>
+      <th>SibSp</th>
+      <th>Parch</th>
+      <th>Fare</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>count</th>
+      <td>892.000000</td>
+      <td>892.000000</td>
+      <td>892.000000</td>
+      <td>715.000000</td>
+      <td>892.000000</td>
+      <td>892.000000</td>
+      <td>892.000000</td>
+    </tr>
+    <tr>
+      <th>mean</th>
+      <td>445.547085</td>
+      <td>0.383408</td>
+      <td>2.308296</td>
+      <td>30.249189</td>
+      <td>0.523543</td>
+      <td>0.381166</td>
+      <td>195.705100</td>
+    </tr>
+    <tr>
+      <th>std</th>
+      <td>257.564835</td>
+      <td>0.486489</td>
+      <td>0.835666</td>
+      <td>20.038824</td>
+      <td>1.102240</td>
+      <td>0.805706</td>
+      <td>4887.636304</td>
+    </tr>
+    <tr>
+      <th>min</th>
+      <td>1.000000</td>
+      <td>0.000000</td>
+      <td>1.000000</td>
+      <td>0.420000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+    </tr>
+    <tr>
+      <th>25%</th>
+      <td>222.750000</td>
+      <td>0.000000</td>
+      <td>2.000000</td>
+      <td>20.750000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>7.917700</td>
+    </tr>
+    <tr>
+      <th>50%</th>
+      <td>445.500000</td>
+      <td>0.000000</td>
+      <td>3.000000</td>
+      <td>28.000000</td>
+      <td>0.000000</td>
+      <td>0.000000</td>
+      <td>14.454200</td>
+    </tr>
+    <tr>
+      <th>75%</th>
+      <td>668.250000</td>
+      <td>1.000000</td>
+      <td>3.000000</td>
+      <td>38.000000</td>
+      <td>1.000000</td>
+      <td>0.000000</td>
+      <td>31.000000</td>
+    </tr>
+    <tr>
+      <th>max</th>
+      <td>891.000000</td>
+      <td>1.000000</td>
+      <td>3.000000</td>
+      <td>400.000000</td>
+      <td>8.000000</td>
+      <td>6.000000</td>
+      <td>146000.520800</td>
+    </tr>
+  </tbody>
+</table>
+
+
+
+很明显有些奇怪的东西混了进来
+
++ 891名乘客, 计数是892
++ 年龄有个最大值是400
+
+
+```python
+corruptedData[corruptedData.duplicated()]
+```
+
+
+
+
+
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>PassengerId</th>
+      <th>Survived</th>
+      <th>Pclass</th>
+      <th>Name</th>
+      <th>Sex</th>
+      <th>Age</th>
+      <th>SibSp</th>
+      <th>Parch</th>
+      <th>Ticket</th>
+      <th>Fare</th>
+      <th>Ethnicity</th>
+      <th>Cabin</th>
+      <th>Embarked</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>42</th>
+      <td>42</td>
+      <td>0</td>
+      <td>2</td>
+      <td>Turpin, Mrs. William John Robert (Dorothy Ann ...</td>
+      <td>female</td>
+      <td>27.0</td>
+      <td>1</td>
+      <td>0</td>
+      <td>11668</td>
+      <td>21.0</td>
+      <td>white</td>
+      <td>NaN</td>
+      <td>S</td>
+    </tr>
+  </tbody>
+</table>
+
+
+
+即位于`PassengerId == 42`的列是重复列.
+
+
+```python
+corruptedData.drop_duplicates(inplace=True)
+corruptedData[corruptedData.duplicated()]
+```
+
+
+
+
+
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>PassengerId</th>
+      <th>Survived</th>
+      <th>Pclass</th>
+      <th>Name</th>
+      <th>Sex</th>
+      <th>Age</th>
+      <th>SibSp</th>
+      <th>Parch</th>
+      <th>Ticket</th>
+      <th>Fare</th>
+      <th>Ethnicity</th>
+      <th>Cabin</th>
+      <th>Embarked</th>
+    </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table>
+
+
+
+重复的现在被去掉了.
+
+接下来处理年龄.
+
+
+
+```python
+corruptedData[corruptedData['Age'] > 100]
+```
+
+
+
+
+
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>PassengerId</th>
+      <th>Survived</th>
+      <th>Pclass</th>
+      <th>Name</th>
+      <th>Sex</th>
+      <th>Age</th>
+      <th>SibSp</th>
+      <th>Parch</th>
+      <th>Ticket</th>
+      <th>Fare</th>
+      <th>Ethnicity</th>
+      <th>Cabin</th>
+      <th>Embarked</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>10</th>
+      <td>11</td>
+      <td>1</td>
+      <td>3</td>
+      <td>Sandstrom, Miss. Marguerite Rut</td>
+      <td>female</td>
+      <td>400.0</td>
+      <td>1</td>
+      <td>1</td>
+      <td>PP 9549</td>
+      <td>16.7</td>
+      <td>white</td>
+      <td>G6</td>
+      <td>S</td>
+    </tr>
+  </tbody>
+</table>
+
+
+
+`PassengerId == 11`出了一个400岁的.
+
+拿掉, 平均数填充.
+
+
+```python
+corruptedData.loc[corruptedData.PassengerId == 11] = corruptedData['Age'].mean
+corruptedData.describe()
+```
+
+
+
+
+
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>PassengerId</th>
+      <th>Survived</th>
+      <th>Pclass</th>
+      <th>Name</th>
+      <th>Sex</th>
+      <th>Age</th>
+      <th>SibSp</th>
+      <th>Parch</th>
+      <th>Ticket</th>
+      <th>Fare</th>
+      <th>Ethnicity</th>
+      <th>Cabin</th>
+      <th>Embarked</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>count</th>
+      <td>891</td>
+      <td>891</td>
+      <td>891</td>
+      <td>891</td>
+      <td>891</td>
+      <td>714.0</td>
+      <td>891</td>
+      <td>891</td>
+      <td>891</td>
+      <td>891.00</td>
+      <td>891</td>
+      <td>204</td>
+      <td>889</td>
+    </tr>
+    <tr>
+      <th>unique</th>
+      <td>891</td>
+      <td>3</td>
+      <td>4</td>
+      <td>891</td>
+      <td>3</td>
+      <td>89.0</td>
+      <td>8</td>
+      <td>8</td>
+      <td>682</td>
+      <td>250.00</td>
+      <td>3</td>
+      <td>148</td>
+      <td>4</td>
+    </tr>
+    <tr>
+      <th>top</th>
+      <td>366</td>
+      <td>0</td>
+      <td>3</td>
+      <td>Gheorgheff, Mr. Stanio</td>
+      <td>male</td>
+      <td>24.0</td>
+      <td>0</td>
+      <td>0</td>
+      <td>347082</td>
+      <td>8.05</td>
+      <td>white</td>
+      <td>B96 B98</td>
+      <td>S</td>
+    </tr>
+    <tr>
+      <th>freq</th>
+      <td>1</td>
+      <td>549</td>
+      <td>490</td>
+      <td>1</td>
+      <td>577</td>
+      <td>30.0</td>
+      <td>608</td>
+      <td>678</td>
+      <td>7</td>
+      <td>43.00</td>
+      <td>888</td>
+      <td>4</td>
+      <td>643</td>
+    </tr>
+  </tbody>
+</table>
+
+
+
+异常值处理完毕
 
 
 ```python
@@ -32,25 +396,12 @@ trainData.head(5)
 ```
 
     (891, 12)
-    
 
 
 
 
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
 
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
 
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
@@ -147,7 +498,6 @@ trainData.head(5)
     </tr>
   </tbody>
 </table>
-</div>
 
 
 
@@ -163,20 +513,7 @@ trainData.describe()
 
 
 
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
 
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
@@ -273,7 +610,6 @@ trainData.describe()
     </tr>
   </tbody>
 </table>
-</div>
 
 
 
@@ -322,20 +658,7 @@ trainData.groupby('Sex').agg('sum')[['Survived', 'Perished']]
 
 
 
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
 
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
@@ -362,7 +685,6 @@ trainData.groupby('Sex').agg('sum')[['Survived', 'Perished']]
     </tr>
   </tbody>
 </table>
-</div>
 
 
 
@@ -376,20 +698,7 @@ trainData.groupby('Sex').agg('mean')[['Survived', 'Perished']]
 
 
 
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
 
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
@@ -416,7 +725,6 @@ trainData.groupby('Sex').agg('mean')[['Survived', 'Perished']]
     </tr>
   </tbody>
 </table>
-</div>
 
 
 
@@ -433,16 +741,16 @@ trainData.groupby('Sex').agg('mean')[['Survived', 'Perished']] \
 
 
 
-    <matplotlib.axes._subplots.AxesSubplot at 0x21de3b6dc40>
+    <matplotlib.axes._subplots.AxesSubplot at 0x206291984f0>
 
 
 
 
-![png](output_11_1.png)
+![png](output_22_1.png)
 
 
 
-![png](output_11_2.png)
+![png](output_22_2.png)
 
 
 不难看出, 在数据集中, `Age == Female`即女性的死亡率较低. 因此加入年龄作为参考因素, 绘制`violin graph`.
@@ -459,12 +767,12 @@ sns.violinplot(x='Sex', y='Age', hue='Survived', data=trainData,
 
 
 
-    <matplotlib.axes._subplots.AxesSubplot at 0x21de4004550>
+    <matplotlib.axes._subplots.AxesSubplot at 0x2062a2f25b0>
 
 
 
 
-![png](output_13_1.png)
+![png](output_24_1.png)
 
 
 得到以下特征
@@ -481,20 +789,7 @@ trainData.groupby('Pclass').agg('sum')[['Survived', 'Perished']]
 
 
 
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
 
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
@@ -526,7 +821,6 @@ trainData.groupby('Pclass').agg('sum')[['Survived', 'Perished']]
     </tr>
   </tbody>
 </table>
-</div>
 
 
 
@@ -538,20 +832,7 @@ trainData.groupby('Pclass').agg('mean')[['Survived', 'Perished']]
 
 
 
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
 
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
@@ -583,7 +864,6 @@ trainData.groupby('Pclass').agg('mean')[['Survived', 'Perished']]
     </tr>
   </tbody>
 </table>
-</div>
 
 
 
@@ -597,12 +877,12 @@ trainData.groupby('Pclass').agg('sum')[['Survived', 'Perished']]\
 
 
 
-    <matplotlib.axes._subplots.AxesSubplot at 0x21de3c6d5e0>
+    <matplotlib.axes._subplots.AxesSubplot at 0x2062929c6a0>
 
 
 
 
-![png](output_18_1.png)
+![png](output_29_1.png)
 
 
 + 客舱等级为1的死亡率最低, 仅约37%
@@ -619,12 +899,12 @@ trainData.groupby('Pclass').mean()['Fare'] \
 
 
 
-    <matplotlib.axes._subplots.AxesSubplot at 0x21de3cc8100>
+    <matplotlib.axes._subplots.AxesSubplot at 0x206292a95b0>
 
 
 
 
-![png](output_20_1.png)
+![png](output_31_1.png)
 
 
 验证上述猜想, 1号Pclass等级的客舱售价最高, 约80+美元, 而2, 3等级的客舱售价较低
@@ -645,12 +925,12 @@ plt.scatter(trainData[trainData['Survived'] == 0]['Age'], trainData[trainData['S
 
 
 
-    <matplotlib.collections.PathCollection at 0x21de65ecf10>
+    <matplotlib.collections.PathCollection at 0x20629ecce20>
 
 
 
 
-![png](output_23_1.png)
+![png](output_34_1.png)
 
 
 上述图的散点大小代表船票费用(`Fare`), x轴代表年龄(`Age`), y轴亦代表船票费用.
@@ -684,12 +964,12 @@ sns.barplot(x='AgeInt', y='Survived', data=avgAge)
 
 
 
-    <matplotlib.axes._subplots.AxesSubplot at 0x21de6634be0>
+    <matplotlib.axes._subplots.AxesSubplot at 0x20629efc2b0>
 
 
 
 
-![png](output_26_1.png)
+![png](output_37_1.png)
 
 
 
@@ -708,8 +988,8 @@ batches
     (0, 6]       0.650000
     (6, 18]      0.366972
     (18, 40]     0.362522
-    (40, 60]     0.401408
-    (60, 100]    0.227273
+    (40, 60]     0.404255
+    (60, 100]    0.217391
     Name: Survived, dtype: float64
 
 
@@ -722,12 +1002,12 @@ batches.plot(kind='bar', color='g', figsize=(16, 12), title='Survival Rate on Ag
 
 
 
-    <matplotlib.axes._subplots.AxesSubplot at 0x21de4235130>
+    <matplotlib.axes._subplots.AxesSubplot at 0x2062a0f82e0>
 
 
 
 
-![png](output_28_1.png)
+![png](output_39_1.png)
 
 
 
@@ -742,12 +1022,12 @@ dftmp.plot(kind='bar', stacked=True, figsize=(16, 12))
 
 
 
-    <matplotlib.axes._subplots.AxesSubplot at 0x21de4237c70>
+    <matplotlib.axes._subplots.AxesSubplot at 0x2062a144070>
 
 
 
 
-![png](output_29_1.png)
+![png](output_40_1.png)
 
 
 > **上一柱图颜色仅为区分年龄段**
@@ -787,7 +1067,7 @@ plt.ylabel('Survival Rate')
 
 
 
-![png](output_32_1.png)
+![png](output_43_1.png)
 
 
 ## 考虑有无父母上船`Parch`
@@ -820,7 +1100,23 @@ plt.ylabel('Survival Rate')
 
 
 
-![png](output_34_1.png)
+![png](output_45_1.png)
+
+
+
+```python
+sns.pairplot(trainData, hue='Sex')
+```
+
+
+
+
+    <seaborn.axisgrid.PairGrid at 0x2062a2bd1c0>
+
+
+
+
+![png](output_46_1.png)
 
 
 明显可以看出: 有父母或子女上船的乘客, 存活率都较`比较组(父母或儿女未在船上)`高.
@@ -852,20 +1148,7 @@ heatMapData.head()
 
 
 
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
 
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
@@ -932,7 +1215,6 @@ heatMapData.head()
     </tr>
   </tbody>
 </table>
-</div>
 
 
 
@@ -946,12 +1228,12 @@ sns.heatmap(heatMapData.astype(float).corr(),linewidths=.4,
 
 
 
-    <matplotlib.axes._subplots.AxesSubplot at 0x21de754e370>
+    <matplotlib.axes._subplots.AxesSubplot at 0x206384bcaf0>
 
 
 
 
-![png](output_38_1.png)
+![png](output_50_1.png)
 
 
 ## 尝试进行训练拟合
@@ -997,25 +1279,12 @@ testData.head(5)
      10  Embarked     418 non-null    object 
     dtypes: float64(2), int64(4), object(5)
     memory usage: 36.0+ KB
-    
 
 
 
 
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
 
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
 
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
@@ -1106,7 +1375,6 @@ testData.head(5)
     </tr>
   </tbody>
 </table>
-</div>
 
 
 
@@ -1168,7 +1436,7 @@ xTest.info()
      5   FMCount   418 non-null    int64  
     dtypes: float64(2), int64(4)
     memory usage: 19.7 KB
-    
+
 
 可以看到训练数据与测试数据字段已经一致, 并且无空值.
 
@@ -1183,25 +1451,11 @@ xTrain.head(5)
 ```
 
     Training Data Head 5
-    
 
 
 
 
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
 
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
@@ -1262,7 +1516,6 @@ xTrain.head(5)
     </tr>
   </tbody>
 </table>
-</div>
 
 
 
@@ -1274,25 +1527,12 @@ xTest.head(5)
 ```
 
     Testing Data Head 5
-    
 
 
 
 
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
 
-    .dataframe tbody tr th {
-        vertical-align: top;
-    }
 
-    .dataframe thead th {
-        text-align: right;
-    }
-</style>
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
@@ -1353,24 +1593,61 @@ xTest.head(5)
     </tr>
   </tbody>
 </table>
-</div>
 
 
+
+### `Linear Support Vector Classification`
+> 支持向量机分类
 
 
 ```python
-random_forest = RandomForestClassifier(n_estimators=300)
-random_forest.fit(xTrain, yTrain)
-yPredict = random_forest.predict(xTest)
-predPercentage = random_forest.score(xTrain, yTrain)
-round(predPercentage*100, 4)
+SVC = LinearSVC()
+SVC.fit(xTrain, yTrain)
+yPredict = SVC.predict(xTest)
+predPercentage = SVC.score(xTrain, yTrain)
+print('Linear SVC Score')
+print(round(predPercentage*100, 4))
 ```
 
+    Linear SVC Score
+    68.9113
 
 
+    c:\dev\env\py38venv\lib\site-packages\sklearn\svm\_base.py:976: ConvergenceWarning: Liblinear failed to converge, increase the number of iterations.
+      warnings.warn("Liblinear failed to converge, increase "
 
+
+### `Random Forest`
+> 随机森林预测
+
+
+```python
+randomForest = RandomForestClassifier(n_estimators=300)
+randomForest.fit(xTrain, yTrain)
+yPredict = randomForest.predict(xTest)
+predPercentage = randomForest.score(xTrain, yTrain)
+print('Random Forest Score')
+print(round(predPercentage*100, 4))
+```
+
+    Random Forest Score
     98.2043
 
 
+### Decision Tree
 
-以上为模型预测准确值(%)
+> 决策树预测
+
+
+```python
+decisionTree = DecisionTreeClassifier()
+decisionTree.fit(xTrain, yTrain)  
+yPredict = decisionTree.predict(xTest)  
+predPercentage = decisionTree.score(xTrain, yTrain)
+print('Decision Tree Score')
+print(round(predPercentage*100, 4))
+```
+
+    Decision Tree Score
+    98.2043
+
