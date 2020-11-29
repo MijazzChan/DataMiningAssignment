@@ -29,3 +29,10 @@
 ### Assignment  3
 
 [Gitee Pages](https://mijazzchan.gitee.io/dataminingassignment/Assignment3/DataMiningAssignment3.html)
+
+### Assignment 3 - Redo
+> Add Decision Tree, LinearSVC
+> Duplicated Data Processing
+> Abnormal Data Processing
+
+[Gitee Pages](https://mijazzchan.gitee.io/dataminingassignment/Assignment3/DataMiningAssignment3-Redo.html)
